@@ -9,9 +9,10 @@ ignore_user_abort(true);
 set_time_limit(0);
 include '../ploy.php';
 
+$ploy = new Ploy();
+
 $log_file = __DIR__."/logs/ploy-{$ploy->rev}.txt";
 
-$ploy            = new Ploy()  ;
 $ploy->ini_file  = '../ploy.ini';
 $ploy->user      = 'nginx';
 $ploy->home      = "/var/lib/nginx";
