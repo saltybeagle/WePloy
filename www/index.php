@@ -117,7 +117,7 @@ function update() {
 				    foreach ($last5 as $l) {
     					if ($l['status']=='Failed') {
     						$log = basename($l['log']);
-    						echo "$l[ts] $l[target] by $l[user] - $l[status] Log: <a href=\"/logs/$log\">$log</a><br />\n";
+    						echo "$l[ts] $l[target] by $l[user] - $l[status] Log: <a href=\"logs/$log\">$log</a><br />\n";
     					} else {
     						echo "$l[ts] $l[target] by $l[user] - $l[status]<br />\n";
     					}
