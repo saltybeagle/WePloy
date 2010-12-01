@@ -8,11 +8,13 @@ a web wrapper.
 ignore_user_abort(true);
 set_time_limit(0);
 include '../ploy.php';
-$ploy = new Ploy();
+
 $log_file = __DIR__."/logs/ploy-{$ploy->rev}.txt";
-$ploy->ini_file = '../ploy.ini';
-$ploy->user = 'nginx';
-$ploy->home = "/var/lib/nginx";
+
+$ploy            = new Ploy()  ;
+$ploy->ini_file  = '../ploy.ini';
+$ploy->user      = 'nginx';
+$ploy->home      = "/var/lib/nginx";
 $ploy->log->loud = true;
 $ploy->config();
 
@@ -21,23 +23,26 @@ $ploy->config();
 include './vpnuser.php';
 
 // Create a MySQL user and password and use it here
-if(!$m = mysql_connect('localhost','root')) {
+if(!$m = mysql_connect('localhost','weploy', 'weploy')) {
 	echo "Unable to connect to MySQL<br>\n";
 	exit;
 }
-mysql_select_db('ploy');
+mysql_select_db('weploy');
 $res = mysql_query("select * from ploys order by ts desc limit 5");
 while ($row = mysql_fetch_assoc($res)) {
 	$last5[] = $row;
 }
 
-function done() {
+function done()
+{
 	global $ploy_id, $ploy_status, $log_file;
-	if(!mysql_query("update ploys set status = '$ploy_status', log='$log_file' where id=$ploy_id")) {
+	if (!mysql_query("update ploys set status = '$ploy_status', log='$log_file' where id=$ploy_id")) {
 		echo mysql_error();
 	}
 }
-if(!empty($_POST['application'])) register_shutdown_function('done');
+if (!empty($_POST['application'])) {
+    register_shutdown_function('done');
+}
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -47,17 +52,17 @@ if(!empty($_POST['application'])) register_shutdown_function('done');
 	<meta http-equiv="imagetoolbar" content="no" />
 	<link rel="stylesheet" href="css/screen.css" media="screen" />
 	<link rel="stylesheet" href="css/ui.progress-bar.css">
-	<script src="js/jquery.js" type="text/javascript" charset="utf-8"></script>
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js" type="text/javascript" charset="utf-8"></script>
 	<script src="js/progress.js" type="text/javascript" charset="utf-8"></script>
 </head>
 <body>
-<script>
+<script type="text/javascript">
 var targets = [];
 <?php
 $i=0;
-foreach($ploy->targets as $t=>$o) {
+foreach ($ploy->targets as $t=>$o) {
 	$targets[$i] = $t;
-	if(!$i) {
+	if (!$i) {
 		$selected = 0;
 		$app = $o['application'];
 		$revision = $o['revision'];
@@ -65,7 +70,7 @@ foreach($ploy->targets as $t=>$o) {
 	echo "targets[{$i}] = ".json_encode(array('application'=>$o['application'],'revision'=>$o['revision'])).";\n";
 	$i++;
 }
-if(!empty($_POST['application'])) {
+if (!empty($_POST['application'])) {
 	$app = $_POST['application'];
 	$revision = $_POST['revision'];
 	$selected = $_POST['target'];
@@ -79,10 +84,10 @@ function update() {
 }
 </script>
 <div id="container">
-		<img src="/images/wepay-logo.png" width="117" height="58" style="float:left;"/>
+		<img src="images/wepay-logo.png" width="117" height="58" style="float:left;"/>
 		<h1 style="float:right;">WePloy</h1>
 		<br clear="left"/>	
-		<form class="pform" action="/" method="post">	
+		<form class="pform" action="./" method="post">	
 			<fieldset>
 				<p>
 					<label for="target">Choose a target</label>
@@ -91,7 +96,7 @@ function update() {
 					</select>
 				</p>								
 				<p>
-					Verbose Output <input type="checkbox" name="loud" value="1" <?php if(!empty($loud)) echo "checked";?> style="width:32px;"/>
+					Verbose Output <input type="checkbox" name="loud" value="1" <?php if (!empty($loud)) echo "checked";?> style="width:32px;"/>
 				</p>
 			</fieldset>					
 			<fieldset><legend>Ploy</legend>
@@ -107,19 +112,21 @@ function update() {
 			<div style="margin-left: 20px; margin-top:-40px; float:left;">
 				<h4>Last 5:</h4>
 				<?php
-				if(!empty($last5)) foreach($last5 as $l) {
-					if($l['status']=='Failed') {
-						$log = basename($l['log']);
-						echo "$l[ts] $l[target] by $l[user] - $l[status] Log: <a href=\"/logs/$log\">$log</a><br />\n";
-					} else {
-						echo "$l[ts] $l[target] by $l[user] - $l[status]<br />\n";
-					}
+				if (!empty($last5)) {
+				    foreach ($last5 as $l) {
+    					if ($l['status']=='Failed') {
+    						$log = basename($l['log']);
+    						echo "$l[ts] $l[target] by $l[user] - $l[status] Log: <a href=\"/logs/$log\">$log</a><br />\n";
+    					} else {
+    						echo "$l[ts] $l[target] by $l[user] - $l[status]<br />\n";
+    					}
+				    }
 				}
 				?>
 			</div>
 			<p class="submit"><button type="submit"><span style="font-size:1.5em;">Deploy</span></button></p>		
 		</form>	
-<?php if(isset($_POST['target'])): ?>
+<?php if (isset($_POST['target'])): ?>
 <div id="progress_bar" class="ui-progress-bar ui-container">
   <div class="ui-progress" style="width: 0%;">
     <span class="ui-label" style="display:none;">Deploying <b class="value">0%</b></span>
@@ -136,14 +143,16 @@ if(!mysql_query("insert into ploys values(0,'$vpnuser','','','$target','$_POST[r
 }
 $ploy_status = 'Failed';
 $ploy_id = mysql_insert_id();
-if(!empty($ploy->targets[$target]) && $ploy->targets[$target]['revision'] != $revision && strstr($ploy->globals['repository'],'#{revision}')) {
+if (!empty($ploy->targets[$target])
+    && $ploy->targets[$target]['revision'] != $revision
+    && strstr($ploy->globals['repository'],'#{revision}')) {
 	$ploy->targets[$target]['repository'] = str_replace('#{revision}',$revision,$ploy->globals['repository']);
 	$ploy->targets[$target]['revision'] = $revision;
 }
 $ploy->deploy($target);
 $ploy_status = 'Success';
 ?>
-<script>$('#progress_bar').hide();</script>
+<script type="text/javascript">$('#progress_bar').hide();</script>
 </div>
 <?php endif; ?>
 </div>
